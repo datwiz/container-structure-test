@@ -25,6 +25,7 @@ import (
 const (
 	Docker = "docker"
 	Tar    = "tar"
+	Host   = "host"
 )
 
 type Driver interface {
@@ -54,6 +55,8 @@ func InitDriverImpl(driver string) func(unversioned.DriverConfig) (Driver, error
 		return NewDockerDriver
 	case Tar:
 		return NewTarDriver
+	case Host:
+		return NewHostDriver
 	default:
 		return nil
 	}
