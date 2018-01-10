@@ -17,8 +17,8 @@ package drivers
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strings"
+	// "path/filepath"
+	// "strings"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/container-structure-test/types/unversioned"
@@ -26,13 +26,16 @@ import (
 
 type HostDriver struct {
 	// Image pkgutil.Image
-	Root       string // defaults to /
+	// Root       string // defaults to /
 	ConfigPath string // path to image metadata config on host fs
 }
 
-func NewHostDriver(root string, ignore bool) (Driver, error) {
+func NewHostDriver(args []interface{}) (Driver, error) {
+	// root := args[0].(string)
+	metadata := args[0].(string)
 	return &HostDriver{
-		Root: root,
+		// Root: root,
+		ConfigPath: metadata,
 	}, nil
 }
 
@@ -50,37 +53,41 @@ func (d *HostDriver) ProcessCommand(t *testing.T, envVars []unversioned.EnvVar, 
 }
 
 func (d *HostDriver) StatFile(t *testing.T, path string) (os.FileInfo, error) {
-	return os.Stat(filepath.Join(d.Root, path))
+	return os.Stat(path)
 }
 
 func (d *HostDriver) ReadFile(t *testing.T, path string) ([]byte, error) {
-	return ioutil.ReadFile(filepath.Join(d.Root, path))
+	return ioutil.ReadFile(path)
 }
 
 func (d *HostDriver) ReadDir(t *testing.T, path string) ([]os.FileInfo, error) {
-	return ioutil.ReadDir(filepath.Join(d.Root, path))
+	return ioutil.ReadDir(path)
 }
 
 func (d *HostDriver) GetConfig(t *testing.T) (unversioned.Config, error) {
-	// docker provides these as maps (since they can be mapped in docker run commands)
-	// since this will never be the case when built through a dockerfile, we convert to list of strings
-	volumes := []string{}
-	for v := range d.Image.Config.Config.Volumes {
-		volumes = append(volumes, v)
-	}
+	// TODO(nkubala): implement
+	// should just need to convert manifest.json into a Config holder struct
 
-	ports := []string{}
-	for p := range d.Image.Config.Config.ExposedPorts {
-		// docker always appends the protocol to the port, so this is safe
-		ports = append(ports, strings.Split(p, "/")[0])
-	}
+	// // docker provides these as maps (since they can be mapped in docker run commands)
+	// // since this will never be the case when built through a dockerfile, we convert to list of strings
+	// volumes := []string{}
+	// for v := range d.Image.Config.Config.Volumes {
+	// 	volumes = append(volumes, v)
+	// }
 
-	return unversioned.Config{
-		Env:          convertEnvToMap(d.Image.Config.Config.Env),
-		Entrypoint:   d.Image.Config.Config.Entrypoint,
-		Cmd:          d.Image.Config.Config.Cmd,
-		Volumes:      volumes,
-		Workdir:      d.Image.Config.Config.Workdir,
-		ExposedPorts: ports,
-	}, nil
+	// ports := []string{}
+	// for p := range d.Image.Config.Config.ExposedPorts {
+	// 	// docker always appends the protocol to the port, so this is safe
+	// 	ports = append(ports, strings.Split(p, "/")[0])
+	// }
+
+	// return unversioned.Config{
+	// 	Env:          convertEnvToMap(d.Image.Config.Config.Env),
+	// 	Entrypoint:   d.Image.Config.Config.Entrypoint,
+	// 	Cmd:          d.Image.Config.Config.Cmd,
+	// 	Volumes:      volumes,
+	// 	Workdir:      d.Image.Config.Config.Workdir,
+	// 	ExposedPorts: ports,
+	// }, nil
+	return unversioned.Config{}, nil
 }
