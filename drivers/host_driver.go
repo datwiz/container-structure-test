@@ -15,8 +15,8 @@
 package drivers
 
 import (
+	"encoding/json"
 	"io/ioutil"
-	"json"
 	"os"
 	// "path/filepath"
 	// "strings"
@@ -69,14 +69,27 @@ func (d *HostDriver) GetConfig(t *testing.T) (unversioned.Config, error) {
 	// TODO(nkubala): implement
 	// should just need to convert manifest.json into a Config holder struct
 
+	t.Logf("retrieving config")
+
 	file, err := ioutil.ReadFile(d.ConfigPath)
 	if err != nil {
+		t.Errorf("error retrieving config")
 		return unversioned.Config{}, err
 	}
 
-	var config unversioned.Config
+	var config unversioned.FlattenedMetadata
+	// t.Logf("file: %s", file)
 	json.Unmarshal(file, &config)
-	return config, nil
+	t.Logf("config: %v", config)
+	t.Logf("cmd: %s", config.Config["Cmd"])
+	t.Logf("env: %v", config.Config["Env"])
+	return unversioned.Config{
+		Env:        config.Config["Env"].(map[string]string),
+		Entrypoint: config.Config["Entrypoint"].([]string),
+		Cmd:        config.Config["Cmd"].([]string),
+		Volumes:    config.Config["Volumes"].([]string), // TODO(nkubala): this could be a map
+	}, nil
+	// return config.Config, nil
 
 	// // docker provides these as maps (since they can be mapped in docker run commands)
 	// // since this will never be the case when built through a dockerfile, we convert to list of strings

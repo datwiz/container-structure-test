@@ -28,6 +28,16 @@ type Config struct {
 	ExposedPorts []string
 }
 
+type FlattenedMetadata struct {
+	// Config Config `json:"config"`
+	Config map[string]interface{} `json:"config"`
+}
+
+// type FlattenedConfig struct {
+// 	Env []string `json:"Env"`
+// 	Cmd []string `json:"Cmd"`
+// }
+
 type Command []string
 
 type DriverConfig struct {
