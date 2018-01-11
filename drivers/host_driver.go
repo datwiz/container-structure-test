@@ -26,17 +26,14 @@ import (
 )
 
 type HostDriver struct {
-	// Image pkgutil.Image
 	// Root       string // defaults to /
 	ConfigPath string // path to image metadata config on host fs
 }
 
-func NewHostDriver(args []interface{}) (Driver, error) {
-	// root := args[0].(string)
-	metadata := args[0].(string)
+func NewHostDriver(args unversioned.DriverConfig) (Driver, error) {
 	return &HostDriver{
 		// Root: root,
-		ConfigPath: metadata,
+		ConfigPath: args.Metadata,
 	}, nil
 }
 
