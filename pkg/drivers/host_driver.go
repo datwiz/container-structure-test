@@ -165,12 +165,12 @@ func (d *HostDriver) GetConfig() (unversioned.Config, error) {
 	}
 
 	return unversioned.Config{
-		Env:          convertSliceToMap(config.Env),
-		Entrypoint:   config.Entrypoint,
 		Cmd:          config.Cmd,
-		Volumes:      volumes,
-		Workdir:      config.Workdir,
+		Entrypoint:   config.Entrypoint,
+		Env:          convertSliceToMap(config.Env),
 		ExposedPorts: ports,
 		Labels:       convertSliceToMap(config.Labels),
+		Volumes:      volumes,
+		Workdir:      config.Workdir,
 	}, nil
 }

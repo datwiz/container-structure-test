@@ -359,13 +359,13 @@ func (d *DockerDriver) GetConfig() (unversioned.Config, error) {
 	}
 
 	return unversioned.Config{
-		Env:          convertSliceToMap(img.Config.Env),
-		Entrypoint:   img.Config.Entrypoint,
 		Cmd:          img.Config.Cmd,
-		Volumes:      volumes,
-		Workdir:      img.Config.WorkingDir,
+		Entrypoint:   img.Config.Entrypoint,
+		Env:          convertSliceToMap(img.Config.Env),
 		ExposedPorts: ports,
 		Labels:       img.Config.Labels,
+		Volumes:      volumes,
+		Workdir:      img.Config.WorkingDir,
 	}, nil
 }
 

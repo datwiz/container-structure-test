@@ -29,23 +29,23 @@ type Label struct {
 }
 
 type Config struct {
-	Env          map[string]string
-	Entrypoint   []string
 	Cmd          []string
-	Volumes      []string
-	Workdir      string
+	Entrypoint   []string
+	Env          map[string]string
 	ExposedPorts []string
 	Labels       map[string]string
+	Volumes      []string
+	Workdir      string
 }
 
 type FlattenedConfig struct {
-	Env          []string            `json:"Env"`
-	Entrypoint   []string            `json:"Entrypoint"`
 	Cmd          []string            `json:"Cmd"`
-	Volumes      map[string]string   `json:"Volumes"`
-	Workdir      string              `json:"WorkingDir"`
+	Entrypoint   []string            `json:"Entrypoint"`
+	Env          []string            `json:"Env"`
 	ExposedPorts map[string][]string `json:"ExposedPorts"`
 	Labels       []string            `json:"Labels"`
+	Volumes      map[string]string   `json:"Volumes"`
+	Workdir      string              `json:"WorkingDir"`
 }
 
 type FlattenedMetadata struct {

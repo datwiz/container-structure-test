@@ -111,12 +111,12 @@ func (d *TarDriver) GetConfig() (unversioned.Config, error) {
 	}
 
 	return unversioned.Config{
-		Env:          convertSliceToMap(d.Image.Config.Config.Env),
-		Entrypoint:   d.Image.Config.Config.Entrypoint,
 		Cmd:          d.Image.Config.Config.Cmd,
-		Volumes:      volumes,
-		Workdir:      d.Image.Config.Config.Workdir,
+		Entrypoint:   d.Image.Config.Config.Entrypoint,
+		Env:          convertSliceToMap(d.Image.Config.Config.Env),
 		ExposedPorts: ports,
 		Labels:       d.Image.Config.Config.Labels,
+		Volumes:      volumes,
+		Workdir:      d.Image.Config.Config.Workdir,
 	}, nil
 }
