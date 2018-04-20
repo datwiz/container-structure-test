@@ -25,17 +25,30 @@ import (
 )
 
 type MetadataTest struct {
+	Cmd          *[]string      `yaml:"cmd"`
+	Entrypoint   *[]string      `yaml:"entrypoint"`
 	Env          []types.EnvVar `yaml:"env"`
 	ExposedPorts []string       `yaml:"exposedPorts"`
-	Entrypoint   *[]string      `yaml:"entrypoint"`
-	Cmd          *[]string      `yaml:"cmd"`
-	Workdir      string         `yaml:"workdir"`
-	Volumes      []string       `yaml:"volumes"`
 	Labels       []types.Label  `yaml:"labels"`
+	OnBuild      []string       `yaml:"onBuild"`
+	// Shell        []string       `yaml:"shell"`
+	StopSignal   string         `yaml:"stopSignal"`
+	User         string         `yaml:"User"`
+	Volumes      []string       `yaml:"volumes"`
+	Workdir      string         `yaml:"workdir"`
 }
 
 func (mt MetadataTest) LogName() string {
 	return "Metadata Test"
+}
+
+func (mt MetadataTest) missingStringArgs(args []string) bool {
+	for _, arg := range args {
+		if arg == "" {
+		  return true
+		}
+	}
+	return false
 }
 
 func (mt MetadataTest) Validate() error {
@@ -49,11 +62,17 @@ func (mt MetadataTest) Validate() error {
 			return fmt.Errorf("Label key cannot be empty")
 		}
 	}
+
+	if mt.missingStringArgs(mt.ExposedPorts) {
+		return fmt.Errorf("Port cannot be empty")
+	}
+/*
 	for _, port := range mt.ExposedPorts {
 		if port == "" {
 			return fmt.Errorf("Port cannot be empty")
 		}
 	}
+*/
 	for _, volume := range mt.Volumes {
 		if volume == "" {
 			return fmt.Errorf("Volume cannot be empty")
@@ -74,6 +93,8 @@ func (mt MetadataTest) Run(driver drivers.Driver) *types.TestResult {
 		result.Fail()
 		return result
 	}
+
+	// fmt.Printf("metadata imageConfig == %+v\n", imageConfig)
 
 	for _, pair := range mt.Env {
 		if act_val, has_key := imageConfig.Env[pair.Key]; has_key {

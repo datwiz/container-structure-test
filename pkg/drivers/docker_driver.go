@@ -358,13 +358,18 @@ func (d *DockerDriver) GetConfig() (unversioned.Config, error) {
 		ports = append(ports, p.Port())
 	}
 
+	// fmt.Printf("docker::img.Config == %+v\n", img.Config)
 	return unversioned.Config{
 		Cmd:          img.Config.Cmd,
 		Entrypoint:   img.Config.Entrypoint,
 		Env:          convertSliceToMap(img.Config.Env),
 		ExposedPorts: ports,
 		Labels:       img.Config.Labels,
+		OnBuild:      img.Config.OnBuild,
+		// Shell:        img.Config.Shell,
+		StopSignal:   img.Config.StopSignal,
 		Volumes:      volumes,
+		User:         img.Config.User,
 		Workdir:      img.Config.WorkingDir,
 	}, nil
 }

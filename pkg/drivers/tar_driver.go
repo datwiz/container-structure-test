@@ -15,6 +15,7 @@
 package drivers
 
 import (
+	// "fmt"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
@@ -110,12 +111,17 @@ func (d *TarDriver) GetConfig() (unversioned.Config, error) {
 		ports = append(ports, strings.Split(p, "/")[0])
 	}
 
+	// fmt.Printf("tar::img.Config.Config == %+v\n", d.Image.Config.Config)
 	return unversioned.Config{
 		Cmd:          d.Image.Config.Config.Cmd,
 		Entrypoint:   d.Image.Config.Config.Entrypoint,
 		Env:          convertSliceToMap(d.Image.Config.Config.Env),
 		ExposedPorts: ports,
 		Labels:       d.Image.Config.Config.Labels,
+		OnBuild:      d.Image.Config.Config.OnBuild,
+		// Shell:        d.Image.Config.Config.Shell,
+		StopSignal:   d.Image.Config.Config.StopSignal,
+		User:         d.Image.Config.Config.User,
 		Volumes:      volumes,
 		Workdir:      d.Image.Config.Config.Workdir,
 	}, nil

@@ -34,6 +34,10 @@ type Config struct {
 	Env          map[string]string
 	ExposedPorts []string
 	Labels       map[string]string
+	OnBuild      []string
+	// Shell        []string
+	StopSignal   string
+	User         string
 	Volumes      []string
 	Workdir      string
 }
@@ -44,6 +48,10 @@ type FlattenedConfig struct {
 	Env          []string            `json:"Env"`
 	ExposedPorts map[string][]string `json:"ExposedPorts"`
 	Labels       []string            `json:"Labels"`
+	OnBuild      []string            `json:"OnBuild"`
+	// Shell        []string            `json: "Shell"`
+	StopSignal   string              `json:"StopSignal"`
+	User         string              `json:"User"`
 	Volumes      map[string]string   `json:"Volumes"`
 	Workdir      string              `json:"WorkingDir"`
 }
