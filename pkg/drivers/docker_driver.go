@@ -360,7 +360,7 @@ func (d *DockerDriver) GetConfig() (unversioned.Config, error) {
 		ports = append(ports, p.Port())
 	}
 
-	// fmt.Printf("docker::img.Config == %+v\n", img.Config)
+	ctc_lib.Log.Debugf("docker img.Config: %+v", img.Config)
 	return unversioned.Config{
 		Cmd:          img.Config.Cmd,
 		Entrypoint:   img.Config.Entrypoint,

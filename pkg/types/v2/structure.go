@@ -50,6 +50,7 @@ func (st *StructureTest) runAll(channel chan interface{}, fileProcessed chan boo
 	st.RunCommandTests(channel)
 	st.RunFileContentTests(channel)
 	st.RunFileExistenceTests(channel)
+	st.RunMetadataTests(channel)
 	st.RunLicenseTests(channel)
 	fileProcessed <- true
 }
@@ -111,6 +112,10 @@ func (st *StructureTest) RunFileContentTests(channel chan interface{}) {
 }
 
 func (st *StructureTest) RunMetadataTests(channel chan interface{}) {
+	if  err := st.MetadataTest.Validate(); err != nil {
+		ctc_lib.Log.Error(err.Error())
+		return
+	}
 	driver, err := st.NewDriver()
 	if err != nil {
 		ctc_lib.Log.Error(err.Error())

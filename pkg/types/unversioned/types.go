@@ -19,12 +19,12 @@ import (
 	"strings"
 )
 
-type EnvVar struct {
+type KeyValPair struct {
 	Key   string
 	Value string
 }
 
-type Label struct {
+type EnvVar struct {
 	Key   string
 	Value string
 }

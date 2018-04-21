@@ -24,60 +24,122 @@ import (
 )
 
 type MetadataTest struct {
-	Cmd          *[]string      `yaml:"cmd"`
-	Entrypoint   *[]string      `yaml:"entrypoint"`
-	Env          []types.EnvVar `yaml:"env"`
-	ExposedPorts []string       `yaml:"exposedPorts"`
-	Labels       []types.Label  `yaml:"labels"`
-	OnBuild      []string       `yaml:"onBuild"`
-	// Shell        []string       `yaml:"shell"`
-	StopSignal   string         `yaml:"stopSignal"`
-	User         string         `yaml:"User"`
-	Volumes      []string       `yaml:"volumes"`
-	Workdir      string         `yaml:"workdir"`
+	Cmd          *[]string          `yaml:"cmd"`
+	Entrypoint   *[]string          `yaml:"entrypoint"`
+	Env          []types.KeyValPair `yaml:"env"`
+	ExposedPorts []string           `yaml:"exposedPorts"`
+	Labels       []types.KeyValPair `yaml:"labels"`
+	OnBuild      []string           `yaml:"onBuild"`
+	// Shell        []string           `yaml:"shell"`
+	StopSignal   string             `yaml:"stopSignal"`
+	User         string             `yaml:"user"`
+	Volumes      []string           `yaml:"volumes"`
+	Workdir      string             `yaml:"workdir"`
 }
 
 func (mt MetadataTest) LogName() string {
 	return "Metadata Test"
 }
 
-func (mt MetadataTest) missingStringArgs(args []string) bool {
-	for _, arg := range args {
-		if arg == "" {
-		  return true
+func (mt MetadataTest) Validate() error {
+	if mt.hasMissingKeys(mt.Env) {
+		return fmt.Errorf("Environment variable key cannot be empty")
+	}
+	if mt.hasMissingKeys(mt.Labels) {
+		return fmt.Errorf("Label key cannot be empty")
+	}
+	if mt.hasBlankStrings(mt.ExposedPorts) {
+		return fmt.Errorf("Port cannot be empty")
+	}
+	if mt.hasBlankStrings(mt.Volumes) {
+		return fmt.Errorf("Volume cannot be empty")
+	}
+	return nil
+}
+
+func (mt MetadataTest) hasBlankStrings(strings []string) bool {
+	for _, s := range strings {
+		if s == "" {
+			return true
 		}
 	}
 	return false
 }
 
-func (mt MetadataTest) Validate() error {
-	for _, envVar := range mt.Env {
-		if envVar.Key == "" {
-			return fmt.Errorf("Environment variable key cannot be empty")
+func (mt MetadataTest) hasMissingKeys(pairs []types.KeyValPair) bool {
+	for _, pair := range pairs {
+		if pair.Key == "" {
+			return true
 		}
 	}
-	for _, label := range mt.Labels {
-		if label.Key == "" {
-			return fmt.Errorf("Label key cannot be empty")
-		}
-	}
+	return false
+}
 
-	if mt.missingStringArgs(mt.ExposedPorts) {
-		return fmt.Errorf("Port cannot be empty")
+func (mt MetadataTest) testStringRegex(
+	fieldName string,
+	expectedPattern string,
+	actualValue string,
+	result *types.TestResult) {
+	if !utils.CompileAndRunRegex(expectedPattern, actualValue, true) {
+		result.Errorf("Image %s \"%s\" does not match expected value: \"%s\"", fieldName, actualValue, expectedPattern)
+		result.Fail()
 	}
-/*
-	for _, port := range mt.ExposedPorts {
-		if port == "" {
-			return fmt.Errorf("Port cannot be empty")
+}
+
+func (mt MetadataTest) testListOfValues(
+	fieldName string,
+	expectedValues []string,
+	actualValues []string,
+	result *types.TestResult) {
+
+	for _,  value := range expectedValues {
+		if !utils.ValueInList(value, actualValues) {
+			result.Errorf("Image %s \"%s\" not found in config", fieldName, value)
+			result.Fail()
 		}
 	}
-*/
-	for _, volume := range mt.Volumes {
-		if volume == "" {
-			return fmt.Errorf("Volume cannot be empty")
+}
+
+func (mt MetadataTest) testKeyValPairs(
+	fieldName string,
+	expectedKeyValPairs []types.KeyValPair,
+	actualKeyValPairs map[string]string,
+	result *types.TestResult) {
+	for _, expectedPair := range expectedKeyValPairs {
+		if actualValue, hasKey := actualKeyValPairs[expectedPair.Key]; hasKey {
+			if !utils.CompileAndRunRegex(expectedPair.Value, actualValue, true) {
+				result.Errorf("Image %s \"%s\"=\"%s\" does not match expected value: \"%s\"",
+					fieldName, expectedPair.Key, actualValue, expectedPair.Value)
+				result.Fail()
+			}
+		} else {
+			result.Errorf("Image %s \"%s\" not found", fieldName, expectedPair.Key)
+			result.Fail()
 		}
 	}
-	return nil
+}
+
+func (mt MetadataTest) testArgsArray(
+	fieldName string, 
+	expectedArgsArray *[]string,
+	actualArgsArray *[]string,
+	result *types.TestResult) {
+
+	if expectedArgsArray != nil {
+		if len(*expectedArgsArray) != len(*actualArgsArray) {
+			result.Errorf("Image %s %v does not match expected value: %v",
+				fieldName, *actualArgsArray, *expectedArgsArray)
+			result.Fail()
+		} else {
+			for i := range *expectedArgsArray {
+				if (*expectedArgsArray)[i] != (*actualArgsArray)[i] {
+					result.Errorf("Image %s[%d] \"%s\" does not match expected value: \"%s\"",
+						fieldName, i, (*actualArgsArray)[i], (*expectedArgsArray)[i])
+					result.Fail()
+				}
+			}
+		}
+	}
 }
 
 func (mt MetadataTest) Run(driver drivers.Driver) *types.TestResult {
@@ -92,83 +154,24 @@ func (mt MetadataTest) Run(driver drivers.Driver) *types.TestResult {
 		result.Fail()
 		return result
 	}
+	ctc_lib.Log.Debugf("actual imageConfig: %+v", imageConfig)
 
-	// fmt.Printf("metadata imageConfig == %+v\n", imageConfig)
+	// []KeyValuePair tests
+	mt.testKeyValPairs("envvar", mt.Env, imageConfig.Env, result)
+	mt.testKeyValPairs("label", mt.Labels, imageConfig.Labels, result)
 
-	for _, pair := range mt.Env {
-		if act_val, has_key := imageConfig.Env[pair.Key]; has_key {
-			if !utils.CompileAndRunRegex(pair.Value, act_val, true) {
-				result.Errorf("env var %s value does not match expected value: %s", pair.Key, pair.Value)
-				result.Fail()
-			}
-		} else {
-			result.Errorf("variable %s not found in image env", pair.Key)
-			result.Fail()
-		}
-	}
+	// []string tests - argument array
+	mt.testArgsArray("cmd", mt.Cmd, &imageConfig.Cmd, result)
+	mt.testArgsArray("entrypoint", mt.Entrypoint, &imageConfig.Entrypoint, result)
 
-	for _, pair := range mt.Labels {
-		if act_val, has_key := imageConfig.Labels[pair.Key]; has_key {
-			if !utils.CompileAndRunRegex(pair.Value, act_val, true) {
-				result.Errorf("label %s value does not match expected value: %s", pair.Key, pair.Value)
-				result.Fail()
-			}
-		} else {
-			result.Errorf("label %s not found in image metadata", pair.Key)
-			result.Fail()
-		}
+	// string tests
+	mt.testStringRegex("workdir", mt.Workdir, imageConfig.Workdir, result)
+	mt.testStringRegex("user", mt.User, imageConfig.User, result)
+	mt.testStringRegex("stopSignal", mt.StopSignal, imageConfig.StopSignal, result)
 
-	}
+	// []string tests - list of values
+	mt.testListOfValues("ExposedPort", mt.ExposedPorts, imageConfig.ExposedPorts, result)
+	mt.testListOfValues("Volume", mt.Volumes, imageConfig.Volumes, result)
 
-	if mt.Cmd != nil {
-		if len(*mt.Cmd) != len(imageConfig.Cmd) {
-			result.Errorf("Image Cmd %v does not match expected Cmd: %v", imageConfig.Cmd, *mt.Cmd)
-			result.Fail()
-		} else if len(*mt.Cmd) > 0 {
-			fmt.Printf("config length: %d\n", len(*mt.Cmd))
-			fmt.Printf("image command length: %d\n", len(imageConfig.Cmd))
-			fmt.Printf("single config command entry: %s\n", (*mt.Cmd)[0])
-			fmt.Printf("single image command entry: %s\n", imageConfig.Cmd[0])
-			for i := range *mt.Cmd {
-				fmt.Println(i)
-				if (*mt.Cmd)[i] != imageConfig.Cmd[i] {
-					result.Errorf("Image config Cmd does not match expected value: %s", *mt.Cmd)
-					result.Fail()
-				}
-			}
-		}
-	}
-
-	if mt.Entrypoint != nil {
-		if len(*mt.Entrypoint) != len(imageConfig.Entrypoint) {
-			result.Errorf("Image entrypoint %v does not match expected entrypoint: %v", imageConfig.Entrypoint, *mt.Entrypoint)
-			result.Fail()
-		}
-		for i := range *mt.Entrypoint {
-			if (*mt.Entrypoint)[i] != imageConfig.Entrypoint[i] {
-				result.Errorf("Image config entrypoint does not match expected value: %s", *mt.Entrypoint)
-				result.Fail()
-			}
-		}
-	}
-
-	if mt.Workdir != "" && mt.Workdir != imageConfig.Workdir {
-		result.Errorf("Image workdir %s does not match config workdir: %s", imageConfig.Workdir, mt.Workdir)
-		result.Fail()
-	}
-
-	for _, port := range mt.ExposedPorts {
-		if !utils.ValueInList(port, imageConfig.ExposedPorts) {
-			result.Errorf("Port %s not found in config", port)
-			result.Fail()
-		}
-	}
-
-	for _, volume := range mt.Volumes {
-		if !utils.ValueInList(volume, imageConfig.Volumes) {
-			result.Errorf("Volume %s not found in config", volume)
-			result.Fail()
-		}
-	}
 	return result
 }
